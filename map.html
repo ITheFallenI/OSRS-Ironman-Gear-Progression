@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Progression Map | OSRS Ironman Gear</title>
+
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+
+<body>
+  <div class="wrap">
+
+    <div class="hud">
+      <a class="checklist-link" href="./">Gear checklist</a>
+      <button id="btn-reset" type="button">
+        Reset view
+      </button>
+
+      <button id="btn-clear" type="button">
+        Clear manual ticks
+      </button>
+    </div>
+
+    <svg
+      id="root"
+      viewBox="0 0 13850 11250"
+      tabindex="0"
+      aria-label="Ironman Map"
+    >
+
+      <g id="content">
+
+        <!-- PNG image layers injected by main.js -->
+        <g id="image-layers"></g>
+
+        <!-- Interactive overlays -->
+        <g id="overlays"></g>
+
+      </g>
+
+    </svg>
+
+    <!-- Right-click link menu -->
+    <div id="context-menu" class="context-menu hidden"></div>
+
+  </div>
+
+  <script type="module" src="./js/main.js"></script>
+
+</body>
+</html>

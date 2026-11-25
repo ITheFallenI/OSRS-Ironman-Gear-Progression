@@ -119,3 +119,8 @@ svg {
   font-weight: 600;
   opacity: 0.8;
 }
+.checklist-link {
+  align-self: center;
+  color: #edbf78;
+  padding: 0.4rem 0.6rem;
+}

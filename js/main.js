@@ -1,5 +1,7 @@
 import { initPanZoom } from "./panzoom.js";
 import overlays from "./rect_overlays.js";
+import { entries } from "./checklist-data.js";
+import { createProgress } from "./checklist-state.js";
 
 const svg = document.getElementById("root");
 const content = document.getElementById("content");
@@ -49,41 +51,13 @@ const IMAGE_LAYERS = [
 const OVERLAY_OFFSET_X = 120;
 const OVERLAY_OFFSET_Y = 120;
 
-const STORAGE_KEY = "osrs-ironman-selected-overlays-v1";
-
-function loadSelectedOverlayIds() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-
-    if (Array.isArray(saved)) {
-      return new Set(saved);
-    }
-
-    return new Set();
-  } catch (error) {
-    console.warn("Could not load saved overlays:", error);
-    return new Set();
-  }
-}
-
-const selectedOverlayIds = loadSelectedOverlayIds();
+const progress = createProgress(entries);
 
 const AREAS = overlays.map((area) => ({
   ...area,
   x: area.x + OVERLAY_OFFSET_X,
   y: area.y + OVERLAY_OFFSET_Y,
 }));
-
-function saveSelectedOverlays() {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify([...selectedOverlayIds])
-    );
-  } catch (error) {
-    console.warn("Could not save overlays:", error);
-  }
-}
 
 function drawImageLayers() {
   imageLayers.innerHTML = "";
@@ -121,26 +95,16 @@ function createOverlay(area) {
 }
 
 function toggleOverlay(area) {
-  const overlayId = `overlay-${safeId(area.id)}`;
-  const existing = document.getElementById(overlayId);
-
-  if (existing) {
-    existing.remove();
-    selectedOverlayIds.delete(area.id);
-    saveSelectedOverlays();
-    return;
-  }
-
-  overlaysLayer.appendChild(createOverlay(area));
-  selectedOverlayIds.add(area.id);
-  saveSelectedOverlays();
+  const key = progress.entriesByArea.get(area.id);
+  progress.setComplete(key, progress.status(key) === "todo");
+  restoreSavedOverlays();
 }
 
 function restoreSavedOverlays() {
   overlaysLayer.innerHTML = "";
 
   for (const area of AREAS) {
-    if (selectedOverlayIds.has(area.id)) {
+    if (progress.status(progress.entriesByArea.get(area.id)) !== "todo") {
       overlaysLayer.appendChild(createOverlay(area));
     }
   }
@@ -271,10 +235,17 @@ btnReset.addEventListener("click", () => {
 btnClear.addEventListener("click", () => {
   hideContextMenu();
 
-  overlaysLayer.innerHTML = "";
-  selectedOverlayIds.clear();
-  saveSelectedOverlays();
+  progress.clearManual();
+  restoreSavedOverlays();
 });
+
+function refreshProgress() {
+  progress.load();
+  restoreSavedOverlays();
+}
+
+window.addEventListener("storage", refreshProgress);
+window.addEventListener("pageshow", refreshProgress);
 
 document.addEventListener("click", () => {
   hideContextMenu();

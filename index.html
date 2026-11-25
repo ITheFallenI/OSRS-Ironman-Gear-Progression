@@ -1,50 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>OSRS Ironman Interactive</title>
-
-  <link rel="stylesheet" href="./css/styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111215">
+  <meta name="description" content="Track your Old School RuneScape Ironman gear. Paste a bank export to check off items on the progression guide.">
+  <title>Ironman Gear Tracker | OSRS</title>
+  <link rel="stylesheet" href="./css/checklist.css">
 </head>
-
 <body>
-  <div class="wrap">
-
-    <div class="hud">
-      <button id="btn-reset" type="button">
-        Reset view
-      </button>
-
-      <button id="btn-clear" type="button">
-        Clear overlays
-      </button>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="./" aria-label="Ironman Gear Tracker home">
+        <span class="brand-mark" aria-hidden="true"><i></i></span>
+        <span>Ironman<span class="brand-muted"> / </span>Gear</span>
+      </a>
+      <nav aria-label="Guide views">
+        <a href="./" aria-current="page">Checklist</a>
+        <a href="./map.html">Progression map</a>
+      </nav>
     </div>
+  </header>
 
-    <svg
-      id="root"
-      viewBox="0 0 13850 11250"
-      tabindex="0"
-      aria-label="Ironman Map"
-    >
+  <main class="shell">
+    <section class="overview" aria-labelledby="page-title">
+      <div class="intro">
+        <p class="eyebrow">Old School RuneScape</p>
+        <h1 id="page-title">Ironman gear<br class="desktop-break"> progression</h1>
+        <p>Paste your bank export and see what you’ve already earned.</p>
+      </div>
+      <div class="progress-card">
+        <div class="progress-heading">
+          <div>
+            <p>Overall progress</p>
+            <strong id="progress-count">—</strong>
+          </div>
+          <span id="progress-percent">0%</span>
+        </div>
+        <progress id="progress-meter" aria-label="Overall gear progression" max="100" value="0"></progress>
+        <dl class="progress-breakdown">
+          <div><dt><i class="bank-dot"></i>Bank matches</dt><dd id="bank-count">0</dd></div>
+          <div><dt><i class="manual-dot"></i>Manual ticks</dt><dd id="manual-count">0</dd></div>
+        </dl>
+      </div>
+    </section>
 
-      <g id="content">
+    <div class="workspace">
+      <aside class="import-card" aria-labelledby="import-title">
+        <h2 id="import-title">Import your bank</h2>
+        <p>Copy your bank export, including item IDs, names and quantities.</p>
+        <form id="bank-form">
+          <div class="input-heading">
+            <label for="bank-input">Bank export</label>
+            <button type="button" id="load-example" class="text-button">Load example</button>
+          </div>
+          <textarea id="bank-input" rows="7" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="import-privacy" placeholder="Item id  Item name  Item quantity&#10;9185     Rune crossbow    1"></textarea>
+          <button type="submit" class="primary-button">Import bank</button>
+        </form>
+        <p class="import-result" id="import-result" role="status" hidden></p>
+        <button type="button" id="clear-bank" class="text-button clear-button" hidden>Clear bank import</button>
+        <p id="import-privacy" class="privacy">Your export stays in this browser. Importing again replaces bank matches and keeps your manual ticks.</p>
+      </aside>
 
-        <!-- PNG image layers injected by main.js -->
-        <g id="image-layers"></g>
+      <section class="checklist" aria-labelledby="checklist-title">
+        <div class="checklist-heading">
+          <h2 id="checklist-title">Gear checklist</h2>
+          <span id="result-count" aria-live="polite"></span>
+        </div>
+        <div class="filters">
+          <label class="search-field">
+            <span aria-hidden="true"></span>
+            <input id="search" type="search" placeholder="Search gear, drops or bosses" aria-label="Search checklist">
+          </label>
+          <label class="section-field">
+            <span class="sr-only">Progression section</span>
+            <select id="section-filter"><option value="">All sections</option></select>
+          </label>
+        </div>
+        <div class="status-filters" aria-label="Filter by completion">
+          <button type="button" aria-pressed="true" data-filter="all">All gear</button>
+          <button type="button" aria-pressed="false" data-filter="todo">To do</button>
+          <button type="button" aria-pressed="false" data-filter="done">Completed</button>
+        </div>
+        <div id="groups"></div>
+        <noscript><p class="empty">Enable JavaScript to use the checklist and bank import.</p></noscript>
+      </section>
+    </div>
+  </main>
 
-        <!-- Interactive overlays -->
-        <g id="overlays"></g>
-
-      </g>
-
-    </svg>
-
-    <!-- Right-click link menu -->
-    <div id="context-menu" class="context-menu hidden"></div>
-
-  </div>
-
-  <script type="module" src="./js/main.js"></script>
-
+  <footer class="shell site-footer">
+    <span>Based on Scotty Martin’s Ironman gear progression guide.</span>
+    <a href="https://github.com/ITheFallenI/OSRS-Ironman-Gear-Progression">Source on GitHub</a>
+  </footer>
+  <script type="module" src="./js/checklist.js"></script>
 </body>
 </html>

@@ -1,52 +1,93 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111215">
+  <meta name="description" content="Explore the Old School RuneScape Ironman gear progression map and track your gear.">
   <title>Progression Map | OSRS Ironman Gear</title>
-
-  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/checklist.css">
+  <link rel="stylesheet" href="./css/styles.css">
 </head>
-
 <body>
-  <div class="wrap">
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="./" aria-label="Ironman Gear Tracker home">
+        <span class="brand-mark" aria-hidden="true"><i></i></span>
+        <span>Ironman<span class="brand-muted"> / </span>Gear</span>
+      </a>
+      <nav aria-label="Guide views">
+        <a href="./">Checklist</a>
+        <a href="./map.html" aria-current="page">Progression map</a>
+      </nav>
+    </div>
+  </header>
 
-    <div class="hud">
-      <a class="checklist-link" href="./">Gear checklist</a>
-      <button id="btn-reset" type="button">
-        Reset view
-      </button>
-
-      <button id="btn-clear" type="button">
-        Clear manual ticks
-      </button>
+  <main class="shell map-shell">
+    <div class="map-heading">
+      <h1>Progression map</h1>
+      <div class="map-progress">
+        <span id="map-progress-count">— complete</span>
+        <progress id="map-progress-meter" aria-label="Overall gear progression" max="100" value="0"></progress>
+      </div>
     </div>
 
-    <svg
-      id="root"
-      viewBox="0 0 13850 11250"
-      tabindex="0"
-      aria-label="Ironman Map"
-    >
+    <div class="map-layout">
+      <section class="map-frame" aria-label="Gear progression chart">
+        <div class="map-tools">
+          <label class="section-field map-section-picker">
+            <span class="sr-only">Jump to section</span>
+            <select id="map-section"><option value="">Full map</option></select>
+          </label>
+          <div class="map-zoom" role="group" aria-label="Zoom controls">
+            <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+            <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+          </div>
+          <button id="btn-reset" class="map-button" type="button">Reset view</button>
+        </div>
+        <svg id="root" class="map-canvas" viewBox="0 0 13850 11250" tabindex="0" role="group" aria-label="Interactive gear progression map" aria-describedby="map-instructions">
+          <defs><clipPath id="tile-artwork"></clipPath></defs>
+          <g id="section-panels" aria-hidden="true"></g>
+          <g id="progression-paths" aria-hidden="true"></g>
+          <g id="tile-backs" aria-hidden="true"></g>
+          <g id="image-layers" clip-path="url(#tile-artwork)" aria-hidden="true"></g>
+          <g id="map-tiles"></g>
+        </svg>
+        <p class="map-help" id="map-instructions">Drag to pan. Scroll or pinch to zoom. Select a tile for details.<span class="sr-only"> Use the arrow keys to move between focused tiles and Enter to open details.</span></p>
+        <noscript><p class="map-help">Enable JavaScript to explore the map.</p></noscript>
+      </section>
 
-      <g id="content">
+      <aside class="map-sidebar">
+        <section class="map-panel map-details" id="map-details" aria-labelledby="selected-item" data-empty="true">
+          <div class="details-heading">
+            <h2 id="selected-item">Item details</h2>
+            <button id="close-details" class="map-button close-details" type="button" aria-label="Close item details" hidden>×</button>
+          </div>
+          <p id="selection-placeholder">Select an item or milestone on the map to see its status and guide links.</p>
+          <div id="selection" hidden>
+            <p id="item-status" class="map-status" role="status"></p>
+            <p id="item-quantity" class="item-quantity" hidden></p>
+            <button id="toggle-complete" class="map-button" type="button">Mark complete</button>
+            <ul id="item-links" class="item-links"></ul>
+          </div>
+        </section>
+        <section class="map-panel map-legend" aria-labelledby="legend-title">
+          <h2 id="legend-title">Map legend</h2>
+          <ul>
+            <li><span class="legend-sample" aria-hidden="true"></span>To do</li>
+            <li><span class="legend-sample legend-bank" aria-hidden="true">✓</span>In bank</li>
+            <li><span class="legend-sample legend-manual" aria-hidden="true">✓</span>Manual tick</li>
+          </ul>
+          <button id="btn-clear" class="text-button clear-button" type="button">Clear manual ticks</button>
+        </section>
+      </aside>
+    </div>
+  </main>
 
-        <!-- PNG image layers injected by main.js -->
-        <g id="image-layers"></g>
-
-        <!-- Interactive overlays -->
-        <g id="overlays"></g>
-
-      </g>
-
-    </svg>
-
-    <!-- Right-click link menu -->
-    <div id="context-menu" class="context-menu hidden"></div>
-
-  </div>
-
+  <footer class="shell site-footer map-shell">
+    <span>Based on Scotty Martin’s Ironman gear progression guide.</span>
+    <a href="https://github.com/ITheFallenI/OSRS-Ironman-Gear-Progression">Source on GitHub</a>
+  </footer>
   <script type="module" src="./js/main.js"></script>
-
 </body>
 </html>

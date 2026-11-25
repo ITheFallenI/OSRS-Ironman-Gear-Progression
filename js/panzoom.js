@@ -1,178 +1,118 @@
-export function initPanZoom(svg, content, opts = {}) {
-  const NAT_W = opts.naturalWidth ?? 13850;
-  const NAT_H = opts.naturalHeight ?? 11250;
+export function initPanZoom(svg, { width, height, onChange }) {
+  const maxZoom = 12;
+  const pointers = new Map();
+  let center = { x: width / 2, y: height / 2 };
+  let zoom = 1;
+  let dragged = false;
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const fit = () => Math.max(width / svg.clientWidth, height / svg.clientHeight);
+  const units = () => fit() / zoom;
 
-  let vbX = 0;
-  let vbY = 0;
-  let vbW = NAT_W;
-  let vbH = NAT_H;
-
-  const MIN_SCALE = opts.minScale ?? 0.2;
-  const MAX_SCALE = opts.maxScale ?? 12;
-  const ZOOM_SENS = opts.zoomSensitivity ?? 0.00055;
-  const ZOOM_STEP_CAP = opts.zoomStepCap ?? 0.3;
-  let PAN_DAMP = opts.panDamp ?? 0.9;
-  const EDGE_PAD_PX = opts.edgePaddingPx ?? 8;
-
-  content.classList.add("pannable");
-
-  function applyViewBox() {
-    const padX = EDGE_PAD_PX * (vbW / svg.clientWidth);
-    const padY = EDGE_PAD_PX * (vbH / svg.clientHeight);
-
-    const minX = -vbW + padX;
-    const maxX = NAT_W - padX;
-    const minY = -vbH + padY;
-    const maxY = NAT_H - padY;
-
-    vbX = Math.max(minX, Math.min(maxX, vbX));
-    vbY = Math.max(minY, Math.min(maxY, vbY));
-
-    svg.setAttribute("viewBox", `${vbX} ${vbY} ${vbW} ${vbH}`);
+  function constrain(value, span, limit) {
+    const inset = span / 2 - 20 * units();
+    return span >= limit ? limit / 2 : clamp(value, inset, limit - inset);
   }
 
-  function clientToSvg(evtLike) {
-    const pt = svg.createSVGPoint();
-    pt.x = evtLike.clientX;
-    pt.y = evtLike.clientY;
-    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  function draw() {
+    if (!svg.clientWidth || !svg.clientHeight) return;
+    const w = svg.clientWidth * units();
+    const h = svg.clientHeight * units();
+    center.x = constrain(center.x, w, width);
+    center.y = constrain(center.y, h, height);
+    svg.setAttribute("viewBox", `${center.x - w / 2} ${center.y - h / 2} ${w} ${h}`);
+    onChange?.(zoom <= 1, zoom >= maxZoom);
   }
 
-  svg.addEventListener(
-    "wheel",
-    (evt) => {
-      evt.preventDefault();
-
-      const p = clientToSvg(evt);
-
-      const step = Math.max(
-        -ZOOM_STEP_CAP,
-        Math.min(ZOOM_STEP_CAP, -evt.deltaY * ZOOM_SENS)
-      );
-
-      const factor = Math.exp(step);
-
-      let newW = vbW / factor;
-      const minW = NAT_W / MAX_SCALE;
-      const maxW = NAT_W / MIN_SCALE;
-
-      newW = Math.max(minW, Math.min(maxW, newW));
-
-      const newH = newW * (vbH / vbW);
-
-      const rx = (p.x - vbX) / vbW;
-      const ry = (p.y - vbY) / vbH;
-
-      vbX = p.x - rx * newW;
-      vbY = p.y - ry * newH;
-      vbW = newW;
-      vbH = newH;
-
-      applyViewBox();
-    },
-    { passive: false }
-  );
-
-  let dragging = false;
-  let sx = 0;
-  let sy = 0;
-  let svx = 0;
-  let svy = 0;
-
-  function isLeftMouse(evt) {
-    return evt.button === 0 && evt.buttons === 1;
+  function reset() {
+    center = { x: width / 2, y: height / 2 };
+    zoom = 1;
+    draw();
   }
 
-  function startDrag(evt) {
-    // Touch can still drag.
-    if (evt.touches) {
-      evt.preventDefault();
-
-      dragging = true;
-      content.classList.add("dragging");
-
-      const e = evt.touches[0];
-
-      sx = e.clientX;
-      sy = e.clientY;
-      svx = vbX;
-      svy = vbY;
-
-      return;
+  function zoomBy(factor, point) {
+    const oldUnits = units();
+    zoom = clamp(zoom * factor, 1, maxZoom);
+    if (point) {
+      const rect = svg.getBoundingClientRect();
+      const delta = oldUnits - units();
+      center.x += (point.x - rect.left - rect.width / 2) * delta;
+      center.y += (point.y - rect.top - rect.height / 2) * delta;
     }
-
-    // Mouse drag ONLY starts with left button.
-    if (!isLeftMouse(evt)) {
-      dragging = false;
-      content.classList.remove("dragging");
-      return;
-    }
-
-    evt.preventDefault();
-
-    dragging = true;
-    content.classList.add("dragging");
-
-    sx = evt.clientX;
-    sy = evt.clientY;
-    svx = vbX;
-    svy = vbY;
+    draw();
   }
 
-  function doDrag(evt) {
-    if (!dragging) return;
-
-    // If this is mouse movement and left button is no longer held, stop.
-    if (!evt.touches && evt.buttons !== 1) {
-      endDrag();
-      return;
-    }
-
-    const e = evt.touches ? evt.touches[0] : evt;
-
-    const pxToSvgX = vbW / svg.clientWidth;
-    const pxToSvgY = vbH / svg.clientHeight;
-
-    vbX = svx - (e.clientX - sx) * PAN_DAMP * pxToSvgX;
-    vbY = svy - (e.clientY - sy) * PAN_DAMP * pxToSvgY;
-
-    applyViewBox();
+  function frame({ x, y, w, h }) {
+    const padding = 300;
+    center = { x: x + w / 2, y: y + h / 2 };
+    zoom = clamp(fit() / Math.max((w + padding) / svg.clientWidth, (h + padding) / svg.clientHeight), 1, maxZoom);
+    draw();
   }
 
-  function endDrag() {
-    dragging = false;
-    content.classList.remove("dragging");
+  function reveal({ x, y, w, h }) {
+    const halfWidth = (svg.clientWidth / 2 - 12) * units();
+    const halfHeight = (svg.clientHeight / 2 - 12) * units();
+    if (x < center.x - halfWidth) center.x = x + halfWidth;
+    if (x + w > center.x + halfWidth) center.x = x + w - halfWidth;
+    if (y < center.y - halfHeight) center.y = y + halfHeight;
+    if (y + h > center.y + halfHeight) center.y = y + h - halfHeight;
+    draw();
   }
 
-  content.addEventListener("mousedown", startDrag);
-  window.addEventListener("mousemove", doDrag);
-  window.addEventListener("mouseup", endDrag);
+  function panBy(dx, dy) {
+    center.x -= dx * units();
+    center.y -= dy * units();
+    draw();
+  }
 
-  content.addEventListener("touchstart", startDrag, { passive: false });
-  window.addEventListener("touchmove", doDrag, { passive: false });
-  window.addEventListener("touchend", endDrag);
+  svg.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? svg.clientHeight : 1);
+    zoomBy(Math.exp(clamp(-delta * .002, -.4, .4)), { x: event.clientX, y: event.clientY });
+  }, { passive: false });
 
-  content.addEventListener("contextmenu", () => {
-    endDrag();
+  svg.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    if (pointers.size === 0) dragged = false;
+    const { clientX: x, clientY: y, pointerId } = event;
+    pointers.set(pointerId, { x, y, startX: x, startY: y });
+    event.target.setPointerCapture(pointerId);
   });
 
-  window.addEventListener("resize", applyViewBox);
+  svg.addEventListener("pointermove", (event) => {
+    const previous = pointers.get(event.pointerId);
+    if (!previous) return;
+    const { clientX: x, clientY: y } = event;
+    const dx = x - previous.x;
+    const dy = y - previous.y;
+    const other = [...pointers.entries()].find(([id]) => id !== event.pointerId)?.[1];
+    if (other) {
+      const start = Math.max(1, Math.hypot(previous.x - other.x, previous.y - other.y));
+      const distance = Math.hypot(x - other.x, y - other.y);
+      zoomBy(distance / start, { x: (previous.x + other.x) / 2, y: (previous.y + other.y) / 2 });
+      panBy(dx / 2, dy / 2);
+      dragged = true;
+    } else if (dragged) {
+      panBy(dx, dy);
+    } else if (Math.hypot(x - previous.startX, y - previous.startY) >= 5) {
+      panBy(x - previous.startX, y - previous.startY);
+      dragged = true;
+    }
+    Object.assign(previous, { x, y });
+    svg.classList.toggle("is-dragging", dragged);
+  });
 
-  function resetView() {
-    vbX = 0;
-    vbY = 0;
-    vbW = NAT_W;
-    vbH = NAT_H;
-    applyViewBox();
+  function endPointer(event) {
+    pointers.delete(event.pointerId);
+    if (pointers.size === 0) svg.classList.remove("is-dragging");
   }
+  svg.addEventListener("pointerup", endPointer);
+  svg.addEventListener("pointercancel", endPointer);
+  svg.addEventListener("lostpointercapture", endPointer);
+  svg.addEventListener("click", (event) => {
+    if (dragged && event.detail > 0) event.stopPropagation();
+  }, true);
 
-  resetView();
-
-  return {
-    resetView,
-    applyViewBox,
-    setPanDamp(value) {
-      PAN_DAMP = value;
-    },
-  };
+  new ResizeObserver(draw).observe(svg);
+  reset();
+  return { reset, zoomBy, frame, panBy, reveal };
 }

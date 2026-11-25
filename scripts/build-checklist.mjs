@@ -66,6 +66,11 @@ const overrides = {
   "Warriors Ring": ["Warrior ring"],
   "Bones To Peaches": ["Bones to Peaches unlock", null],
   "Piety": ["Piety prayer", null],
+  "1750+ Total Level": ["1750+ total level", null],
+  "2000+ Total Level": ["2000+ total level", null],
+  "2200+ Total Level": ["2200+ total level", null],
+  "80+ Skill Level": ["80+ skill level", null],
+  "90+ Skill Level": ["90+ skill level", null],
   "Crystalline Portal Nexus": ["Crystalline portal nexus", null],
   "Ornate Jewellery Box": ["Ornate jewellery box", null],
   "Fairy Ring": ["Fairy ring in POH", null],
@@ -111,6 +116,7 @@ const overrides = {
   "Menaphite Kit": ["Menaphite ornament kit"],
   "Tztok-jad": ["TzTok-Jad", null],
   "Corporal Beast": ["Corporeal Beast", null],
+  "Dragons": ["Dragons", null, "Dragon_(race)"],
   "Calvarion & Vetion": ["Calvar'ion & Vet'ion", null],
   "kril Tsutsaroth": ["K'ril Tsutsaroth", null],
   "Phosanis Nightmare": ["Phosani's Nightmare", null],
@@ -175,7 +181,7 @@ for (const area of sorted) {
   const fallback = ["Blessed Boots", "Mage Arena II", "Barrows Legs", "Barrows Top"].includes(key)
     ? links[0]?.url
     : `${wikiBase}${encodeURIComponent(target.replaceAll(" ", "_"))}`;
-  const wiki = (override && automatic ? fallback : links[0]?.url) ?? fallback;
+  const wiki = override?.[2] ? wikiBase + override[2] : (override && automatic ? fallback : links[0]?.url) ?? fallback;
   entries.set(key, {
     key,
     name: target,
